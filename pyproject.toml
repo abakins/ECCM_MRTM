@@ -1,0 +1,11 @@
+[project]
+name = "eccm-mrtm"
+version = "0.1.0"
+description = "ECCM - MRTM"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numba",
+    "numpy>=2.3.1",
+    "scipy>=1.16.0",
+]
