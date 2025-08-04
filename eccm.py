@@ -54,7 +54,6 @@ def eccm(pressure_grid, reference_pressure, reference_temperature, planet_gravit
         Note that returned aerosol densities (in g/m3) aren't particularly accurate 
         (They are accurate in the sense of original Weidenschilling/Lewis model, 
         but not accurate in general, see M. Wong et al. 2015 "fresh clouds" discussion)
-        Neither is the NH3/H2O solution concentration below the cloud base 
         
         Gas profiles are generally accurate, which is important 
         for the main application of this code (computing microwave brightness temperatures)
@@ -224,6 +223,8 @@ def modify_dry_lapse(reference_temperature, reference_pressure, pressure_grid, b
                     start = b
                 else: 
                     end = b
+                    if start > end: 
+                        start, end = end, start 
                     sp_slices.append(slice(start, end))
         
     count = 0 
@@ -252,7 +253,7 @@ def modify_developed_lapse(pressure_grid, temperature_grid, set_points=None, lap
         If any of set_points falls above the occultation lower boundary, an error will be thrown 
 
     """ 
-    
+
     # Make slices to adjust lapse rates later 
     if set_points is not None:
         sp_slices = []
@@ -263,6 +264,8 @@ def modify_developed_lapse(pressure_grid, temperature_grid, set_points=None, lap
                     start = b
                 else: 
                     end = b
+                    if start > end: 
+                        start, end = end, start 
                     sp_slices.append(slice(start, end))
     
     dTdp = np.gradient(temperature_grid, pressure_grid) 
