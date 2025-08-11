@@ -108,15 +108,15 @@ def eccm(pressure_grid, reference_pressure, reference_temperature, planet_gravit
                                                                           h2o_rh, nh3_rh, h2s_rh, ch4_rh, ph3_rh,
                                                                           bulk_h2, bulk_he, latent_heat_update, force_temperature=True) 
 
-    # Compute altitude/pressure mapping
-    altitude_grid = hypsometric(pressure_grid, new_temperature_grid, planet_gravity, bulk_h2, bulk_he)
-
     # Adjust H2/He to maintain the appropriate split 
     total_x = x_h2o + x_nh3 + x_h2s + x_ch4 + x_ph3
     ratio_h2 = bulk_h2 / (1 - bulk_h2) 
     x_h2 = (1 - total_x) / (1 + 1 / ratio_h2)
     ratio_he = bulk_he / (1 - bulk_he) 
     x_he = (1 - total_x) / (1 + 1 / ratio_he)
+
+    # Compute altitude/pressure mapping
+    altitude_grid = hypsometric(pressure_grid, new_temperature_grid, planet_gravity, x_h2, x_he, x_h2o, x_nh3)
     
     return pressure_grid, new_temperature_grid, altitude_grid, \
             x_h2o, x_nh3, x_h2s, x_ch4, x_ph3, x_h2, x_he, \
@@ -162,20 +162,19 @@ def compute_temperature_guess(pressure_grid, reference_temperature, reference_pr
     return temperature_grid[inv]
 
 
-def hypsometric(pressure_grid, temperature_grid, planet_gravity, bulk_h2, bulk_he):
+def hypsometric(pressure_grid, temperature_grid, planet_gravity, x_h2, x_he, x_h2o, x_ch4):
     """ Converts between pressure and height coordinates 
         Output is in kilometer units and referenced to the 1 bar pressure level
 
         pressure_grid: Pressure grid to work with, Pascals
         temperature_grid: Temperature grid to work with, K
         planet_gravity: Mean gravitational acceleration, m/s2 
-        bulk_h2: H2 bulk fraction 
-        bulk_he: He bulk fraction 
+        x_: Gas mole fraction profiles bulk fraction 
 
     """ 
     center_bin_pressure_grid = 0.5 * (pressure_grid[:-1] + pressure_grid[1:])
-    M = bulk_h2 * thermo.h2_molar_mass * 1e-3 + bulk_he * thermo.he_molar_mass * 1e-3
-    altitude_grid = sint.cumulative_trapezoid(spc.R * temperature_grid[:-1] / planet_gravity / M * np.log(pressure_grid[1:] / pressure_grid[:-1]), initial=0)
+    M = x_h2 * thermo.h2_molar_mass * 1e-3 + x_he * thermo.he_molar_mass * 1e-3 + x_h2o * thermo.h2o_molar_mass * 1e-3 + x_ch4 * thermo.ch4_molar_mass * 1e-3
+    altitude_grid = sint.cumulative_trapezoid(spc.R * temperature_grid[:-1] / planet_gravity / M[:-1] * np.log(pressure_grid[1:] / pressure_grid[:-1]), initial=0)
     altitude_1bar = spi.interp1d(center_bin_pressure_grid, altitude_grid)(1e5)
     altitude_grid = altitude_grid - altitude_1bar  # Subtract to set zero at the one bar level
     altitude_grid = spi.interp1d(center_bin_pressure_grid, altitude_grid, bounds_error=False, fill_value='extrapolate')(pressure_grid) / 1e3 
