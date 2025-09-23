@@ -17,7 +17,9 @@ import molecule as mlc
 #  MRTM - A Giant Planet Microwave Radiative Transfer Model (non-scattering)
 
 
-def mrtm(freq_ghz, incang_deg, z_km, p_pa, T, x_h2o, x_nh3, x_h2s, x_ch4, x_ph3, x_h2, x_he, planet_radius): 
+def mrtm(freq_ghz, incang_deg, z_km, p_pa, T, 
+         x_h2o, x_nh3, x_h2s, x_ch4, x_ph3, x_h2, x_he, 
+         planet_radius, return_profiles=False): 
     """ Microwave radiative transfer model (non-scattering)
 
         Inputs: 
@@ -104,7 +106,7 @@ def mrtm(freq_ghz, incang_deg, z_km, p_pa, T, x_h2o, x_nh3, x_h2s, x_ch4, x_ph3,
 
     # Others don't have refractivity defined 
     h2o_n = H2O.refractivity(T, x_h2o * p_bar)
-    ch4_n = CH4.refractivity(T, x_h2o * p_bar)
+    ch4_n = CH4.refractivity(T, x_ch4 * p_bar)
     h2_n = H2.refractivity(T, x_h2 * p_bar)
     he_n = He.refractivity(T, x_he * p_bar)
     nr = 1 + 1e-6 * np.sum(np.stack([h2o_n, ch4_n, h2_n, he_n]), axis=0)
@@ -126,8 +128,17 @@ def mrtm(freq_ghz, incang_deg, z_km, p_pa, T, x_h2o, x_nh3, x_h2s, x_ch4, x_ph3,
     full_tau = up_tau[..., -1]
     wup = valid_alpha * np.exp(-up_tau)
     wlimb = wup * (1 + np.exp(-2 * down_tau))
-    Tup = sint.trapezoid(wup * T[mask], x=z, axis=-1)
-    Tlimb = 2.73 * np.exp(-2 * full_tau) + sint.trapezoid(wlimb * T[mask], x=z, axis=-1)
+    # Rayleigh-Jeans 
+    # Tup = sint.trapezoid(wup * T[mask], x=z, axis=-1)
+    # Tlimb = 2.73 * np.exp(-2 * full_tau) + sint.trapezoid(wlimb * T[mask], x=z, axis=-1)
+    # Planck
+    source = inv_planck_function(freq_ghz[:, np.newaxis] * 1e9, T[mask])
+    cmb = inv_planck_function(freq_ghz * 1e9, 2.73)
+    Bup = sint.trapezoid(wup * source, x=z, axis=-1)
+    Blimb = cmb * np.exp(-2 * full_tau) + sint.trapezoid(wlimb * source, x=z, axis=-1)
+    Tup = planck_function(freq_ghz * 1e9, Bup)
+    Tlimb = planck_function(freq_ghz * 1e9, Blimb)
+
     weight_up = np.zeros((len(freq_ghz), len(T)))
     weight_limb = np.zeros((len(freq_ghz), len(T)))
     weight_up[..., mask] = wup
@@ -136,4 +147,24 @@ def mrtm(freq_ghz, incang_deg, z_km, p_pa, T, x_h2o, x_nh3, x_h2s, x_ch4, x_ph3,
     # Restore input convention for weighting functions 
     weight_up = weight_up[:, np.argsort(sortmask)]
     weight_limb = weight_limb[:, np.argsort(sortmask)]
-    return full_tau, weight_up, weight_limb, Tup, Tlimb
+
+    if return_profiles: 
+        return full_tau, weight_up, weight_limb, Tup, Tlimb, nr, alpha,
+    else: 
+        return full_tau, weight_up, weight_limb, Tup, Tlimb
+
+def planck_function(freq, intens): 
+    """ Frequency in Hz units 
+        Intensity in SI units 
+    """
+    Bv = intens 
+    log_arg = 2.0 * spc.h * freq**3. / (spc.c**2. * Bv) + 1.0 
+    T = spc.h * freq / spc.k / (np.log(log_arg))
+    return T 
+
+def inv_planck_function(freq, T): 
+    """ Frequency in Hz units 
+        T in Kelvins
+    """
+    Bv = 2 * spc.h * freq**3 / spc.c**2 / (np.exp(spc.h * freq / spc.k / T) - 1)
+    return Bv 
