@@ -117,17 +117,32 @@ def run_eccm(pressure_grid, temperature_grid,
         a_ph3solid[i + 1] = a2_ph3solid
 
     # Finally, update the relative humidities 
-    mask = (a_h2osolid + a_h2oliquid + a_h2osolution).astype(np.bool)
-    x_h2o[mask] = x_h2o[mask] * h2o_rh
-    mask = (a_nh3solid + a_nh3liquid).astype(np.bool)
-    x_nh3[mask] = x_nh3[mask] * nh3_rh
-    mask = (a_h2ssolid + a_h2sliquid).astype(np.bool)
-    x_h2s[mask] = x_h2s[mask] * h2s_rh
-    mask = (a_ch4solid + a_ch4liquid).astype(np.bool)
-    x_ch4[mask] = x_ch4[mask] * ch4_rh
-    mask = (a_ph3solid).astype(np.bool)
-    x_ph3[mask] = x_ph3[mask] * ph3_rh
-
+    mask = (a_h2osolid + a_h2oliquid + a_h2osolution).astype(np.bool_)
+    # x_h2o[mask] = x_h2o[mask] * h2o_rh
+    if (mask == True).any(): 
+        idx = list(mask).index(True)
+        x_h2o[idx:] = x_h2o[idx:] * h2o_rh
+    mask = (a_nh3solid + a_nh3liquid).astype(np.bool_)
+    # x_nh3[mask] = x_nh3[mask] * nh3_rh
+    if (mask == True).any(): 
+        idx = list(mask).index(True)
+        x_nh3[idx:] = x_nh3[idx:] * nh3_rh
+    mask = (a_h2ssolid + a_h2sliquid).astype(np.bool_)
+    # x_h2s[mask] = x_h2s[mask] * h2s_rh
+    if (mask == True).any(): 
+        idx = list(mask).index(True)
+        x_h2s[idx:] = x_h2s[idx:] * h2s_rh
+    mask = (a_ch4solid + a_ch4liquid).astype(np.bool_)
+    # x_ch4[mask] = x_ch4[mask] * ch4_rh
+    if (mask == True).any(): 
+        idx = list(mask).index(True)
+        x_ch4[idx:] = x_ch4[idx:] * ch4_rh
+    mask = (a_ph3solid).astype(np.bool_)
+    # x_ph3[mask] = x_ph3[mask] * ph3_rh
+    if (mask == True).any(): 
+        idx = list(mask).index(True)
+        x_ph3[idx:] = x_ph3[idx:] * ph3_rh  
+        
     return temperature_grid, x_h2o, x_nh3, x_h2s, x_ch4, x_ph3, \
             a_h2osolid, a_h2oliquid, a_h2osolution, \
             a_nh3solid, a_nh3liquid, \
