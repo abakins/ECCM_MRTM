@@ -1,9 +1,10 @@
+import os
 import numpy as np
 from numpy import exp, log10, pi
 import scipy.constants as spc
 import scipy.io as sio
 import scipy.interpolate as spi
-import os
+from ..eccm import thermo
 
 
 class molecule:
@@ -53,6 +54,15 @@ class molecule:
         gamma, zeta, delta = self.load_line_parameters(
             temperature, gas_pressure, gases_index
         )
+
+        # Doppler broadening
+        gamma_doppler = self.doppler_width(self.lines["FREQ"].ravel(), temperature)
+
+        # A merged width number, see Wikipedia (Olivero, J. J.; Longbothum, R. L., 1977)
+        gamma_total = 0.5 * (
+            0.5343 * 2 * gamma + np.sqrt(0.2169 * 4 * gamma**2 + 4 * gamma_doppler**2)
+        )
+
         alpha_max = self.absorption_coeff(
             10 ** self.lines["LGINT"].ravel(),
             temperature,
@@ -61,7 +71,7 @@ class molecule:
             * pressure
             * spc.bar
             / spc.torr,
-            gamma,
+            gamma_total,
         )
         if self.lineshape_type == "Van Vleck-Weisskopf":
             lineshape = self.vanvleckweisskopf(
@@ -173,6 +183,24 @@ class molecule:
             * exp(-(elo * self.hc / spc.k * (1 / t - 1 / self.To)))
         )
         return lca
+
+    def doppler_width(self, frequency, temperature):
+        """Doppler width calculation
+
+        :param frequency: Line center frequencies in MHz (Size M)
+        :param temperature: Gas temperature in Kelvin (Size N)
+
+        Returns Doppler width in MHz (Size N)"""
+
+        temperature = temperature[..., np.newaxis]
+
+        doppler_width = (
+            1.17221e-6
+            * np.sqrt(temperature / self.To * 28 / self.molar_mass)
+            * frequency
+        )
+
+        return doppler_width  # MHz
 
     @staticmethod
     def vanvleckweisskopf(frequency, f_o, gamma):
@@ -714,6 +742,9 @@ class H2S(molecule):
     molar_mass = 34.1  # g/mol
     molar_heat_capacity = 4.01 * spc.R  # J/mol K
     triple_point = 187.61
+    index = thermo.H2S_ID
+    svp_solid = staticmethod(thermo.h2s_solid_saturation_vapor_pressure)
+    svp_liquid = staticmethod(thermo.h2s_liquid_saturation_vapor_pressure)
 
     def __init__(self, **kwargs):
         # Spectral line data
@@ -789,15 +820,18 @@ class H2O(molecule):
     molar_mass = 18.01528  # g/mol
     molar_heat_capacity = 4 * spc.R  # J/mol K
     triple_point = 273.16
+    index = thermo.H2O_ID
+    svp_solid = staticmethod(thermo.h2o_solid_saturation_vapor_pressure)
+    svp_liquid = staticmethod(thermo.h2o_liquid_saturation_vapor_pressure)
 
     def __init__(self, model="BellottiSteffes", use_KS_lines=True, **kwargs):
-        raise ValueError(
-            "There are problems with the KS lines near line centers. Revisit and verify the functionality"
-        )
         self.model = model
 
         # Spectral linedata
         if use_KS_lines:
+            print(
+                "Warning: Using Karpowicz and Steffes 2011 line parameters may result in errors near line cores at millimeter wavelengths"
+            )
             self.lines = sio.loadmat(os.path.join(self.jpl_path, "c018003_KS.mat"))
             self.parameters = sio.loadmat(
                 os.path.join(self.lineshape_path, "H2O_KS.mat")
@@ -1665,6 +1699,9 @@ class NH3(molecule):
     molar_heat_capacity = 4.46 * spc.R  # J/mol K
     linear = False
     triple_point = 195.5
+    index = thermo.NH3_ID
+    svp_solid = staticmethod(thermo.nh3_solid_saturation_vapor_pressure)
+    svp_liquid = staticmethod(thermo.nh3_liquid_saturation_vapor_pressure)
 
     def __init__(self, model="BellottiSteffes", **kwargs):
         self.model = model
@@ -2903,6 +2940,9 @@ class CH4(molecule):
     molar_heat_capacity = 4.5 * spc.R  # J/mol K
     triple_point = 90.7  # Kelvin
     molar_mass = 16.04  # g/mol
+    index = thermo.CH4_ID
+    svp_solid = staticmethod(thermo.ch4_solid_saturation_vapor_pressure)
+    svp_liquid = staticmethod(thermo.ch4_liquid_saturation_vapor_pressure)
 
     def __init__(self, **kwargs):
         self.cia = sio.loadmat(

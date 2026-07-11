@@ -2,7 +2,7 @@ import numpy as np
 import scipy.constants as spc
 import scipy.integrate as sint
 
-import molecule as mlc
+from . import molecule as mlc
 
 
 # 888b     d8888888888b.88888888888888b     d888
@@ -72,7 +72,6 @@ def mrtm(
     x_he = x_he[sortmask]
 
     p_bar = p_pa / spc.bar
-
     H2O = mlc.H2O()
     NH3 = mlc.NH3()
     H2S = mlc.H2S()
