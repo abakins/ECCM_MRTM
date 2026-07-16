@@ -837,7 +837,7 @@ def run_eccm_core(
         z_profile[i] = Z
 
         if use_compressibility:
-            cp = compute_Cp(pmean, T1, bulk_h2, bulk_he, x_ch4_i, x_h2o_i, h2_type)
+            cp = compute_Cp(pmean, T1, Z, bulk_h2, bulk_he, x_ch4_i, x_h2o_i, h2_type)
         else:
             cp = (
                 bulk_h2 * thermo.h2_normal_molar_heat_capacity(T1)
@@ -864,26 +864,22 @@ def run_eccm_core(
         # Recalculate temperature with wet adiabatic lapse rate
         if latent_heat_update and not force_temperature:
             x_cur = x[:, i]
-            # Compute sum of condensable mole fractions and mixing ratios
-            sum_x = 0.0
-            for g in range(thermo.N_GASES):
-                sum_x += x_cur[g]
-            sum_n = sum_x / x_dry_air
             # Numerator: R*T * (1 + Σ L*n/(RT)) → R*T + Σ L*n
-            dTdp_numerator = Z * spc.R * T1
-            for g in range(thermo.N_GASES):
-                n_g = x_cur[g] / x_dry_air  # mixing ratio
-                dTdp_numerator += lh_arr[g] * n_g
-
             # Denominator: R*P * (cp/R + (Σ L²n/(RT)² + (Σ Ln/(RT))² / (1+Σn))
+            sum_x = 0.0
             sum_Ln = 0.0
             sum_L2n = 0.0
+            dTdp_numerator = Z * spc.R * T1
+
             for g in range(thermo.N_GASES):
-                n_g = x_cur[g] / x_dry_air
+                sum_x += x_cur[g]
+                n_g = x_cur[g] / x_dry_air  # mixing ratio
+                dTdp_numerator += lh_arr[g] * n_g
                 Ln_over_RT = lh_arr[g] * n_g / (Z * spc.R * T1)
                 sum_Ln += Ln_over_RT
                 sum_L2n += lh_arr[g] ** 2 * n_g / (Z * spc.R * T1) ** 2
 
+            sum_n = sum_x / x_dry_air
             dTdp_denominator = pmean * cp + pmean * Z * spc.R * (
                 sum_L2n + sum_Ln**2
             ) / (1.0 + sum_n)
@@ -923,7 +919,9 @@ def run_eccm_core(
             )  # g/mol
             H = spc.R * T2 / (M_mix * 1e-3 * planet_gravity)  # scale height in m
             if use_compressibility:
-                cp_sed = compute_Cp(p2, T2, bulk_h2, bulk_he, x_ch4_i, x_h2o_i, h2_type)
+                cp_sed = compute_Cp(
+                    p2, T2, Z, bulk_h2, bulk_he, x_ch4_i, x_h2o_i, h2_type
+                )
             else:
                 cp_sed = (
                     bulk_h2 * thermo.h2_normal_molar_heat_capacity(T2)

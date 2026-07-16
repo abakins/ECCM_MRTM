@@ -10,11 +10,18 @@ wheels/
 *.nbi
 *.nbc
 
+# MacOS 
+.DS_Store
+
 # Virtual environments
 .venv
 
 # Pickle files 
 *.p 
 
+# Pytest 
+.pytest_cache 
+
 # AI 
 *.claude
+*.remember
