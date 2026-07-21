@@ -443,8 +443,10 @@ class TestThermo:
         from eccm_mrtm.eccm.thermo import h2o_nh3h2osolution_saturation_vapor_pressure
 
         T = 300.0
-        svps = [h2o_nh3h2osolution_saturation_vapor_pressure(T, c, 1.0)[0]
-                for c in [0.0, 0.2, 0.4, 0.6, 0.8]]
+        svps = [
+            h2o_nh3h2osolution_saturation_vapor_pressure(T, c, 1.0)[0]
+            for c in [0.0, 0.2, 0.4, 0.6, 0.8]
+        ]
         for i in range(len(svps) - 1):
             assert svps[i] > svps[i + 1]
 
@@ -452,8 +454,10 @@ class TestThermo:
         from eccm_mrtm.eccm.thermo import nh3_nh3h2osolution_saturation_vapor_pressure
 
         T = 250.0
-        svps = [nh3_nh3h2osolution_saturation_vapor_pressure(T, c, 1.0)[0]
-                for c in [1.0, 0.8, 0.6, 0.4, 0.2]]
+        svps = [
+            nh3_nh3h2osolution_saturation_vapor_pressure(T, c, 1.0)[0]
+            for c in [1.0, 0.8, 0.6, 0.4, 0.2]
+        ]
         for i in range(len(svps) - 1):
             assert svps[i] > svps[i + 1]
 
@@ -465,23 +469,37 @@ class TestThermo:
 
 class TestCp:
     def test_cp_greater_than_ideal_at_high_pressure(self):
-        from eccm_mrtm.eccm.eos import compute_Cp
-        from eccm_mrtm.eccm.thermo import h2_normal_molar_heat_capacity, HE_MOLAR_HEAT_CAPACITY
+        from eccm_mrtm.eccm.eos import compute_Cp, compute_Z
+        from eccm_mrtm.eccm.thermo import (
+            h2_normal_molar_heat_capacity,
+            HE_MOLAR_HEAT_CAPACITY,
+        )
 
         T = 300.0
         x_h2, x_he = 0.864, 0.136
-        cp_real = compute_Cp(100e5, T, x_h2, x_he, 0.0, 0.0, 0)
-        cp_ideal = x_h2 * h2_normal_molar_heat_capacity(T) + x_he * HE_MOLAR_HEAT_CAPACITY
+        x_ch4, x_h2o = 0.0, 0.0
+        Z = compute_Z(100e5, T, x_h2, x_he, x_ch4, x_h2o)
+        cp_real = compute_Cp(100e5, T, Z, x_h2, x_he, 0.0, 0.0, 0)
+        cp_ideal = (
+            x_h2 * h2_normal_molar_heat_capacity(T) + x_he * HE_MOLAR_HEAT_CAPACITY
+        )
         assert cp_real > cp_ideal
 
     def test_cp_approaches_ideal_at_low_pressure(self):
-        from eccm_mrtm.eccm.eos import compute_Cp
-        from eccm_mrtm.eccm.thermo import h2_normal_molar_heat_capacity, HE_MOLAR_HEAT_CAPACITY
+        from eccm_mrtm.eccm.eos import compute_Cp, compute_Z
+        from eccm_mrtm.eccm.thermo import (
+            h2_normal_molar_heat_capacity,
+            HE_MOLAR_HEAT_CAPACITY,
+        )
 
         T = 300.0
         x_h2, x_he = 0.864, 0.136
-        cp_real = compute_Cp(1e5, T, x_h2, x_he, 0.0, 0.0, 0)
-        cp_ideal = x_h2 * h2_normal_molar_heat_capacity(T) + x_he * HE_MOLAR_HEAT_CAPACITY
+        x_ch4, x_h2o = 0.0, 0.0
+        Z = compute_Z(1e5, T, x_h2, x_he, x_ch4, x_h2o)
+        cp_real = compute_Cp(1e5, T, Z, x_h2, x_he, 0.0, 0.0, 0)
+        cp_ideal = (
+            x_h2 * h2_normal_molar_heat_capacity(T) + x_he * HE_MOLAR_HEAT_CAPACITY
+        )
         assert abs(cp_real - cp_ideal) / cp_ideal < 0.01
 
 
@@ -497,7 +515,9 @@ class TestCondenseAdditional:
         P = np.logspace(np.log10(50e5), np.log10(0.1e5), 200)
         ref_p = np.array([0.1e5, 1e5, 5e5])
         ref_t = np.array([110.0, 165.0, 260.0])
-        result = run_eccm(P, ref_p, ref_t, 24.79, [GasInput("NH3", deep=1.5e-4)], 0.864, 0.136)
+        result = run_eccm(
+            P, ref_p, ref_t, 24.79, [GasInput("NH3", deep=1.5e-4)], 0.864, 0.136
+        )
         nh3_aer = result["aerosol_densities"]["NH3"]
         total_cloud = abs(nh3_aer["solid"]).max() + abs(nh3_aer["liquid"]).max()
         assert total_cloud > 0

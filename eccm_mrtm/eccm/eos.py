@@ -2281,6 +2281,8 @@ def compute_Z(P, T, x_h2, x_he, x_ch4, x_h2o):
     Trace gases (mole fraction < 0.01) are excluded because their binary
     interaction parameters are not calibrated at low concentrations.
 
+    If pressure exceeds 1e8 Pa, the function will return Z=1 (beyond equation of state validity)
+
     Parameters
     ----------
     P : float
@@ -2311,7 +2313,7 @@ def compute_Z(P, T, x_h2, x_he, x_ch4, x_h2o):
     x_h2o_eff = x_h2o if x_h2o >= MIN_X_FOR_EOS else 0.0
 
     if P > 1e8:
-        print("WARNING [compute_Z]: Pressure exceeds 1e8 Pa. Returning Z=1.")
+        #  print("WARNING [compute_Z]: Pressure exceeds 1e8 Pa. Returning Z=1.")
         return 1.0
 
     # Fixed-point iteration: rho = P/(Z*R*T)
