@@ -11,7 +11,7 @@ wheels/
 *.nbc
 
 # MacOS 
-.DS_Store
+*.DS_Store
 
 # Virtual environments
 .venv
