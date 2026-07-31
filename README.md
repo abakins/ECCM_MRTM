@@ -1,6 +1,6 @@
 # ECCM - MRTM 
 
-![Saturn ECCM](demos/Akins_Hofstadter_2026/Fig1_Fig3_ECCMDemo/saturn_eccm.pdf)
+![Saturn ECCM](demos/Akins_Hofstadter_2026/Fig1_Fig3_ECCMDemo/saturn_eccm.png)
 
 ## ECCM 
 ECCM is a simple equilibrium cloud condensation model relevant to computing the atmospheric composition and temperature profiles of giant planet tropospheres. 
