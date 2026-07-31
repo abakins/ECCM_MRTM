@@ -234,38 +234,3 @@ ax.get_legend().set_title("Wavelength (cm)")
 
 fig.tight_layout()
 fig.savefig("hga_latres.pdf")
-
-
-# # Moon resolution
-# frequency = np.linspace(300e6, 30e9, 1000)
-# wave = spc.c / frequency
-# dist = [50, 85, 100]  # km
-# resolution = [150]  # km
-
-# ls = ['-', '--']
-# c = plt.cm.magma(np.linspace(0, 0.8, len(dist)))
-# plt.figure(figsize=(14, 7))
-# for i, d in enumerate(dist):
-#     for j, r in enumerate(resolution):
-#         res_dist = r  # km
-#         inst_angle = np.degrees(2 * np.arctan(res_dist / 2 / d))
-#         inst_diam = 1. * wave / (np.radians(inst_angle))  # m, note this approximation is off, see Ulaby/Long discussion on antennas
-#         plt.loglog(wave, inst_diam, ls=ls[j], color=c[i], label='Dist.: {:.0f} km'.format(d))
-#         print('Distance: {}, Spatial resolution: {}, Instrument beam angle: {}'.format(d, res_dist, inst_angle))
-
-# plt.gca().invert_xaxis()
-# plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-# plt.xlabel('Wavelength (meters)')
-# plt.ylabel('Antenna diameter (meters)')
-
-# ylim = plt.gca().get_ylim()
-# xlim = plt.gca().get_xlim()
-# juno_wave = np.array([0.5, 0.24, 0.1155, 0.0575, 0.03, 0.0137])
-# juno_diams = np.array([1.6, 0.77, 0.72, 0.36, 0.18, 0.15])
-# # plt.vlines(juno_wave, *ylim, color='k')
-# plt.hlines(3.7, *xlim, color='r', ls='-')
-# plt.scatter(juno_wave, juno_diams, c='k', s=20)
-# # plt.gca().set_ylim(*ylim)
-# plt.gca().set_xlim(*xlim)
-# plt.tight_layout()
-# plt.savefig('juno_moon_comparison.png', dpi=300)

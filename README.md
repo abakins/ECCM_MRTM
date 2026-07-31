@@ -10,17 +10,16 @@ Tropopause and stratosphere a priori profiles are included from radio occultatio
 
 ### Procedures 
 - eccm - High-level interface 
-- core - Core ECCM routines, written as loops accelerated with Numba 
-- thermo_data - Vapor pressure and heat information for different gases 
-- find_root - Scipy's Brent method implementation
+- core - Core ECCM routines
+- thermo - Vapor pressure and heat information for different gases 
+- eos - Equation of state for H2/He/H2O/CH4 mixtures
 
 ## MRTM
 MRTM is a simple non-scattering microwave radiative transfer model for computing microwave brightness temperatures from ECCM atmospheres. 
-It includes models for the microwave opacity of ECCM gases developed by the Georgia Tech Planetary Atmospheres Lab. 
 
 ### Procedures 
-- mrtm - Core MRTM routines, vectorized 
-- molecule - Opacity models for gases 
+- mrtm - Core MRTM routines
+- molecule - Microwave opacity models for gases 
 
   
 
